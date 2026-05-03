@@ -63,24 +63,25 @@ const inputClosePin = document.querySelector('.form__input--pin');
 
 const movements = [200, 450, -400, 3000, -650, -130, 70, 1300];
 
-const calDisplayBalance = function (movement) {
-  const balance = movement.reduce((acc, cur) => acc + cur, 0);
-  labelBalance.textContent = `${balance}₦`;
+const calDisplayBalance = function (account) {
+  account.balance = account.movements.reduce((acc, cur) => acc + cur, 0);
+  labelBalance.textContent = `${account.balance}₦`;
 };
 // calDisplayBalance(movements);
 
-const calSummaryDisplay = function (movement) {
-  const sumIncome = movement
+const calSummaryDisplay = function (account) {
+  const sumIncome = account.movements
     .filter(mov => mov > 0)
     .reduce((acc, cur) => acc + cur, 0);
   labelSumIn.textContent = `${sumIncome}₦`;
-  const sumOutcome = movement
+  const sumOutcome = account.movements
     .filter(mov => mov < 0)
     .reduce((acc, cur) => acc + cur, 0);
   labelSumOut.textContent = `${sumOutcome}₦`;
-  const sumInterest = movement
+  const sumInterest = account.movements
     .filter(mov => mov > 0)
-    .map(mov => mov * 1.2)
+    .map(acc => (acc * account.interestRate) / 100)
+    .filter(acc => acc >= 1)
     .reduce((acc, cur) => acc + cur, 0);
   labelSumInterest.textContent = `${sumInterest}₦`;
 };
@@ -93,8 +94,8 @@ const displayMovement = function (movement) {
     const html = `
       <div class="movements__row">
         <div class="movements__type movements__type--${type}">${
-      i + 1
-    } ${type}</div>
+          i + 1
+        } ${type}</div>
         <div class="movements__value">${mov}₦</div>
       </div>
     `;
@@ -115,6 +116,13 @@ const createUsernames = function (account) {
 };
 createUsernames(accounts);
 
+//Update UI
+const updateInterface = function (account) {
+  calDisplayBalance(account);
+  displayMovement(account.movements);
+  calSummaryDisplay(account);
+};
+
 // Login Functionality
 let currentAccount;
 btnLogin.addEventListener('click', function (e) {
@@ -122,9 +130,9 @@ btnLogin.addEventListener('click', function (e) {
   e.preventDefault();
   //find the account
   currentAccount = accounts.find(
-    acc => acc.username === inputLoginUsername.value
+    acc => acc.username === inputLoginUsername.value,
   );
-  console.log(currentAccount);
+  // console.log(currentAccount);
   //confirm the account
   if (currentAccount?.pin === Number(inputLoginPin.value)) {
     //display UI and a welcome message
@@ -133,9 +141,54 @@ btnLogin.addEventListener('click', function (e) {
     }`;
     // DisplayUI
     containerApp.style.opacity = 1;
-    calDisplayBalance(currentAccount.movements);
-    displayMovement(currentAccount.movements);
-    calSummaryDisplay(currentAccount.movements);
+    updateInterface(currentAccount);
+
+    //Transfer Functionality
+  }
+  inputLoginUsername.value = '';
+  inputLoginPin.value = '';
+  inputLoginPin.blur();
+});
+
+// Transfer Functionality
+btnTransfer.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputTransferAmount.value);
+  const receivingAccount = accounts.find(
+    acc => acc.username === inputTransferTo.value,
+  );
+  // console.log(amount, receivingAccount, currentAccount);
+  inputTransferAmount.value = inputTransferTo.value = '';
+  if (
+    amount > 0 &&
+    currentAccount.balance >= amount &&
+    receivingAccount &&
+    receivingAccount?.username !== currentAccount.username
+  ) {
+    //Transfer Amount
+
+    console.log(currentAccount.movements, receivingAccount.movements);
+    currentAccount.movements.push(-amount);
+    receivingAccount.movements.push(amount);
+    //Display UI
+    updateInterface(currentAccount);
+    // inputTransferAmount.value = '';
+    // inputTransferTo.value = '';
+  }
+});
+
+btnClose.addEventListener('click', function (e) {
+  e.preventDefault();
+  if (
+    inputCloseUsername.value === currentAccount.username &&
+    Number(inputClosePin.value) === currentAccount.pin
+  ) {
+    const index = accounts.findIndex(
+      acc => acc.username === currentAccount.username,
+    );
+
+    accounts.splice(index, 1);
+    containerApp.style.opacity = 0;
   }
 });
 
