@@ -142,8 +142,6 @@ btnLogin.addEventListener('click', function (e) {
     // DisplayUI
     containerApp.style.opacity = 1;
     updateInterface(currentAccount);
-
-    //Transfer Functionality
   }
   inputLoginUsername.value = '';
   inputLoginPin.value = '';
@@ -177,6 +175,8 @@ btnTransfer.addEventListener('click', function (e) {
   }
 });
 
+// close account functionality
+
 btnClose.addEventListener('click', function (e) {
   e.preventDefault();
   if (
@@ -192,6 +192,19 @@ btnClose.addEventListener('click', function (e) {
   }
   inputCloseUsername.value = inputClosePin.value = '';
   labelWelcome.textContent = 'Log in to get started';
+});
+
+// Loan Functionality
+btnLoan.addEventListener('click', function (e) {
+  e.preventDefault();
+  const amount = Number(inputLoanAmount.value);
+  if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
+    // Add movement
+    currentAccount.movements.push(amount);
+    // Update UI
+    updateInterface(currentAccount);
+  }
+  inputLoanAmount.value = '';
 });
 
 /////////////////////////////////////////////////
